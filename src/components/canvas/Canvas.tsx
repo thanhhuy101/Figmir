@@ -4,6 +4,9 @@
 "use client";
 
 import {
+  useCanRedo,
+  useCanUndo,
+  useHistory,
   useMutation,
   useMyPresence,
   useSelf,
@@ -47,6 +50,9 @@ export default function Canvas() {
     mode: CanvasMode.None,
   });
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 1 });
+  const history = useHistory();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
 
   const onLayerPointerDown = useMutation(
     ({ self, setMyPresence }, e: React.PointerEvent, layerId: string) => {
@@ -56,22 +62,25 @@ export default function Canvas() {
       ) {
         return;
       }
+
+      history.pause();
       e.stopPropagation();
       if (!self.presence.selection.includes(layerId)) {
-        setMyPresence({ selection: [layerId] });
+        setMyPresence({ selection: [layerId] }, { addToHistory: true });
       }
 
       const point = pointerEventToCanvasPoint(e, camera);
       setState({ mode: CanvasMode.Translating, current: point });
     },
-    [canvasState.mode, camera, canvasState.mode],
+    [canvasState.mode, camera, canvasState.mode, history],
   );
 
   const onResizeHandlePointerDown = useCallback(
     (corner: Side, initialBounds: XYWH) => {
+      history.pause();
       setState({ mode: CanvasMode.Resizing, initialBounds, corner });
     },
-    [],
+    [history],
   );
 
   const insertLayer = useMutation(
@@ -217,7 +226,7 @@ export default function Canvas() {
 
   const unselectLayers = useMutation(({ self, setMyPresence }) => {
     if (self.presence.selection.length > 0) {
-      setMyPresence({ selection: [] });
+      setMyPresence({ selection: [] }, { addToHistory: true });
     }
   }, []);
 
@@ -317,8 +326,9 @@ export default function Canvas() {
       } else {
         setState({ mode: CanvasMode.None });
       }
+      history.resume();
     },
-    [canvasState, setState, insertLayer, unselectLayers],
+    [canvasState, setState, insertLayer, unselectLayers, history],
   );
 
   return (
@@ -368,14 +378,18 @@ export default function Canvas() {
       <ToolsBar
         canvasState={canvasState}
         setCanvasState={(newState) => setState(newState)}
-        canZoomIn={camera.zoom < 2}
-        canZoomOut={camera.zoom > 0.5}
         zoomIn={() => {
           setCamera((camera) => ({ ...camera, zoom: camera.zoom + 0.1 }));
         }}
         zoomOut={() => {
           setCamera((camera) => ({ ...camera, zoom: camera.zoom - 0.1 }));
         }}
+        canZoomIn={camera.zoom < 2}
+        canZoomOut={camera.zoom > 0.5}
+        redo={() => history.redo()}
+        undo={() => history.undo()}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
     </div>
   );
