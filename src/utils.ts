@@ -33,11 +33,11 @@ export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
     result.width = Math.abs(point.x - bounds.x);
   }
   if (corner === Side.Top || (corner & Side.Top) !== 0) {
-    result.x = Math.min(point.y, bounds.y + bounds.height);
+    result.y = Math.min(point.y, bounds.y + bounds.height);
     result.height = Math.abs(bounds.y + bounds.height - point.y);
   }
   if (corner === Side.Bottom || (corner & Side.Bottom) !== 0) {
-    result.x = Math.min(point.y, bounds.y);
+    result.y = Math.min(point.y, bounds.y);
     result.height = Math.abs(point.y - bounds.y);
   }
 

@@ -60,8 +60,11 @@ export default function Canvas() {
       if (!self.presence.selection.includes(layerId)) {
         setMyPresence({ selection: [layerId] });
       }
+
+      const point = pointerEventToCanvasPoint(e, camera);
+      setState({ mode: CanvasMode.Translating, current: point });
     },
-    [canvasState.mode],
+    [canvasState.mode, camera, canvasState.mode],
   );
 
   const onResizeHandlePointerDown = useCallback(
@@ -160,9 +163,38 @@ export default function Canvas() {
     setState({ mode: CanvasMode.Pencil });
   }, []);
 
+  const translateSelectedLayers = useMutation(
+    ({ storage, self }, point: Point) => {
+      if (canvasState.mode !== CanvasMode.Translating) {
+        return;
+      }
+
+      const offset = {
+        x: point.x - canvasState.current.x,
+        y: point.y - canvasState.current.y,
+      };
+
+      const liveLayers = storage.get("layers");
+      for (const id of self.presence.selection) {
+        const layer = liveLayers.get(id);
+        if (layer) {
+          layer.update({
+            x: layer.get("x") + offset.x,
+            y: layer.get("y") + offset.y,
+          });
+        }
+      }
+
+      setState({ mode: CanvasMode.Translating, current: point });
+    },
+    [canvasState],
+  );
+
   const resizeSelectedLayer = useMutation(
     ({ storage, self }, point: Point) => {
-      if (canvasState.mode !== CanvasMode.Resizing) return;
+      if (canvasState.mode !== CanvasMode.Resizing) {
+        return;
+      }
 
       const bounds = resizeBounds(
         canvasState.initialBounds,
@@ -171,6 +203,7 @@ export default function Canvas() {
       );
 
       const liveLayers = storage.get("layers");
+
       if (self.presence.selection.length > 0) {
         const layer = liveLayers.get(self.presence.selection[0]!);
         if (layer) {
@@ -181,6 +214,12 @@ export default function Canvas() {
     },
     [canvasState],
   );
+
+  const unselectLayers = useMutation(({ self, setMyPresence }) => {
+    if (self.presence.selection.length > 0) {
+      setMyPresence({ selection: [] });
+    }
+  }, []);
 
   const startDrawing = useMutation(
     ({ setMyPresence }, point: Point, pressure: number) => {
@@ -251,6 +290,8 @@ export default function Canvas() {
           y: camera.y + deltaY,
           zoom: camera.zoom,
         }));
+      } else if (canvasState.mode === CanvasMode.Translating) {
+        translateSelectedLayers(point);
       } else if (canvasState.mode === CanvasMode.Pencil) {
         continueDrawing(point, e);
       } else if (canvasState.mode === CanvasMode.Resizing) {
@@ -265,6 +306,7 @@ export default function Canvas() {
       const point = pointerEventToCanvasPoint(e, camera);
 
       if (canvasState.mode === CanvasMode.None) {
+        unselectLayers();
         setState({ mode: CanvasMode.None });
       } else if (canvasState.mode === CanvasMode.Inserting) {
         insertLayer(canvasState.layerType, point);
@@ -272,9 +314,11 @@ export default function Canvas() {
         setState({ mode: CanvasMode.Dragging, origin: null });
       } else if (canvasState.mode === CanvasMode.Pencil) {
         insertPath();
+      } else {
+        setState({ mode: CanvasMode.None });
       }
     },
-    [canvasState, setState, insertLayer],
+    [canvasState, setState, insertLayer, unselectLayers],
   );
 
   return (

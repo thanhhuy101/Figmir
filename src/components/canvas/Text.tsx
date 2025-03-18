@@ -93,7 +93,7 @@ export default function Text({
         <text
           onPointerDown={(e) => onPointerDown(e, id)}
           x={x}
-          y={y}
+          y={y + fontSize}
           fontSize={fontSize}
           fill={colorToCss(fill)}
           stroke={colorToCss(stroke)}

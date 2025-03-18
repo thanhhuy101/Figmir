@@ -19,7 +19,7 @@ export default function SelectionBox({
       soleLayerId && root.layers.get(soleLayerId)?.type !== LayerType.Path,
   );
   const textRef = useRef<SVGTextElement>(null);
-  const [textWidth, settextWidth] = useState(0);
+  const [textWidth, setTextWidth] = useState(0);
   const padding = 16;
 
   const layers = useStorage((root) => root.layers);
@@ -28,7 +28,7 @@ export default function SelectionBox({
   useEffect(() => {
     if (textRef.current) {
       const bbox = textRef.current.getBBox();
-      settextWidth(bbox.width);
+      setTextWidth(bbox.width);
     }
   }, [layer]);
 
