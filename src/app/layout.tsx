@@ -24,7 +24,7 @@ export default function RootLayout({
       className={`${inter.className}`}
       suppressHydrationWarning={true}
     >
-      <body>{children}</body>
+      <body className="overflow-hidden overscroll-none">{children}</body>
     </html>
   );
 }
