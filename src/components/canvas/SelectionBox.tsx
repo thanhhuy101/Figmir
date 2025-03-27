@@ -62,7 +62,7 @@ const SelectionBox = memo(
             transform: `translate(${bounds.x + bounds.width / 2}px, ${bounds.y + bounds.height + 25}px)`,
           }}
           textAnchor="middle"
-          className="pointed-events-none fill-white text-[11px]"
+          className="pointed-events-none select-none fill-white text-[11px]"
         >
           {Math.round(bounds.width)} x {Math.round(bounds.height)}
         </text>

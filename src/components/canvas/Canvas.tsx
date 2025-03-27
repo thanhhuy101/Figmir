@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -8,7 +9,7 @@ import {
   useCanUndo,
   useHistory,
   useMutation,
-  useMyPresence,
+  //useMyPresence,
   useSelf,
   useStorage,
 } from "@liveblocks/react";
@@ -40,10 +41,13 @@ import ToolsBar from "../toolsbar/ToolsBar";
 import Path from "./Path";
 import SelectionBox from "./SelectionBox";
 import useDeleteLayers from "~/hooks/useDeleteLayers";
+import SelectionTools from "./SelectionTools";
+import Sidebars from "../sidebars/Sidebars";
 
 const MAX_LAYERS = 100;
 
 export default function Canvas() {
+  const [leftIsMinimized, setLeftIsMinimized] = useState(false);
   const roomColor = useStorage((root) => root.roomColor);
   const layerIds = useStorage((root) => root.layerIds);
   const pencilDraft = useSelf((me) => me.presence.pencilDraft);
@@ -117,10 +121,14 @@ export default function Canvas() {
         setMyPresence({ selection: [layerId] }, { addToHistory: true });
       }
 
-      const point = pointerEventToCanvasPoint(e, camera);
-      setState({ mode: CanvasMode.Translating, current: point });
+      if (e.nativeEvent.button === 2) {
+        setState({ mode: CanvasMode.RightClick });
+      } else {
+        const point = pointerEventToCanvasPoint(e, camera);
+        setState({ mode: CanvasMode.Translating, current: point });
+      }
     },
-    [canvasState.mode, camera, canvasState.mode, history],
+    [camera, canvasState.mode, history],
   );
 
   const onResizeHandlePointerDown = useCallback(
@@ -188,7 +196,9 @@ export default function Canvas() {
       if (layer) {
         liveLayerIds.push(layerId);
         liveLayers.set(layerId, layer);
+
         setMyPresence({ selection: [layerId] }, { addToHistory: true });
+        setState({ mode: CanvasMode.None });
       }
     },
     [],
@@ -400,11 +410,14 @@ export default function Canvas() {
       continueDrawing,
       resizeSelectedLayer,
       updateSelectionNet,
+      startMultipleSelection,
     ],
   );
 
   const onPointerUp = useMutation(
     ({}, e: React.PointerEvent) => {
+      if (canvasState.mode === CanvasMode.RightClick) return;
+
       const point = pointerEventToCanvasPoint(e, camera);
 
       if (
@@ -436,12 +449,14 @@ export default function Canvas() {
           }}
           className="h-full w-full touch-none"
         >
+          <SelectionTools camera={camera} canvasMode={canvasState.mode} />
           <svg
             onWheel={onWheel}
             onPointerUp={onPointerUp}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             className="h-full w-full"
+            onContextMenu={(e) => e.preventDefault()}
           >
             <g
               style={{
@@ -500,6 +515,10 @@ export default function Canvas() {
         undo={() => history.undo()}
         canUndo={canUndo}
         canRedo={canRedo}
+      />
+      <Sidebars
+        leftIsMinimized={leftIsMinimized}
+        setLeftIsMinimized={setLeftIsMinimized}
       />
     </div>
   );
