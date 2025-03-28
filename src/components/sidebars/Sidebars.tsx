@@ -1,14 +1,21 @@
+/* eslint-disable @typescript-eslint/consistent-type-imports */
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useMutation, useOthers, useSelf, useStorage } from "@liveblocks/react";
 import Link from "next/link";
-import { hexToRgb } from "~/utils";
+import { colorToCss, connectionIdToColor, hexToRgb } from "~/utils";
 import { PiPathLight, PiSidebarSimpleThin } from "react-icons/pi";
-import { LayerType } from "~/types";
+import { Color, LayerType } from "~/types";
 import { IoEllipseOutline, IoSquareOutline } from "react-icons/io5";
 import { AiOutlineFontSize } from "react-icons/ai";
 import LayerButton from "./LayerButton";
+import NumberInput from "./NumberInput";
+import { BsCircleHalf } from "react-icons/bs";
+import { RiRoundedCorner } from "react-icons/ri";
+import ColorPicker from "./ColorPicker";
+import Dropdown from "./Dropdown";
+import UserAvatar from "./UserAvatar";
 
 export default function Sidebars({
   leftIsMinimized,
@@ -37,6 +44,11 @@ export default function Sidebars({
   const reversedLayerIds = [...(layerIds ?? [])].reverse();
 
   const selection = useSelf((me) => me.presence.selection);
+
+  const setRoomColor = useMutation(({ storage }, newColor: Color) => {
+    storage.set("roomColor", newColor);
+  }, []);
+
   const updateLayer = useMutation(
     (
       { storage },
@@ -179,6 +191,224 @@ export default function Sidebars({
             onClick={() => setLeftIsMinimized(false)}
             className="h-5 w-5 cursor-pointer"
           />
+        </div>
+      )}
+
+      {/* Right Sidebar */}
+      {!leftIsMinimized || layer ? (
+        <div
+          className={`fixed ${leftIsMinimized && layer ? "bottom-3 right-3 top-3 rounded-xl" : ""} ${!leftIsMinimized && !layer ? "h-screen" : ""} ${!leftIsMinimized && layer ? "bottom-0 top-0 h-screen" : ""} right-0 flex w-[240px] flex-col border-l border-gray-200 bg-white`}
+        >
+          <div className="flex items-center justify-between pr-2">
+            <div className="max-36 flex w-full gap-2 overflow-x-scroll p-3 text-xs">
+              {me && (
+                <UserAvatar
+                  color={connectionIdToColor(me.connectionId)}
+                  name={me.info.name}
+                />
+              )}
+            </div>
+            <p>Share button</p>
+          </div>
+          <div className="border-b border-gray-200"></div>
+          {layer ? (
+            <>
+              <div className="flex flex-col gap-2 p-4">
+                <span className="mb-2 text-[11px] font-medium">Position</span>
+                <div className="flex flex-col gap-1">
+                  <p className="text-[9px] font-medium text-gray-500">
+                    Position
+                  </p>
+                  <div className="flex w-full gap-2">
+                    <NumberInput
+                      classNames="w-1/2"
+                      value={layer.x}
+                      onChange={(number) => {
+                        updateLayer({ x: number });
+                      }}
+                      icon={<p>X</p>}
+                    />
+                    <NumberInput
+                      classNames="w-1/2"
+                      value={layer.y}
+                      onChange={(number) => {
+                        updateLayer({ y: number });
+                      }}
+                      icon={<p>Y</p>}
+                    />
+                  </div>
+                </div>
+              </div>
+              {layer.type !== LayerType.Path && (
+                <>
+                  <div className="border-b border-gray-200"></div>
+                  <div className="flex flex-col gap-2 p-4">
+                    <span className="mb-2 text-[11px] font-medium">Layout</span>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[9px] font-medium text-gray-500">
+                        Dimensions
+                      </p>
+                      <div className="flex w-full gap-2">
+                        <NumberInput
+                          value={layer.width}
+                          onChange={(number) => {
+                            updateLayer({ width: number });
+                          }}
+                          classNames="w-1/2"
+                          icon={<p>W</p>}
+                        />
+                        <NumberInput
+                          value={layer.height}
+                          onChange={(number) => {
+                            updateLayer({ height: number });
+                          }}
+                          classNames="w-1/2"
+                          icon={<p>H</p>}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="border-b border-gray-200"></div>
+              <div className="flex flex-col gap-2 p-4">
+                <span className="mb-2 text-[11px] font-medium">Appearance</span>
+                <div className="flex w-full gap-2">
+                  <div className="flex w-1/2 flex-col gap-1">
+                    <p className="text-[9px] font-medium text-gray-500">
+                      Opacity
+                    </p>
+                    <NumberInput
+                      value={layer.opacity}
+                      min={0}
+                      max={100}
+                      onChange={(number) => {
+                        updateLayer({ opacity: number });
+                      }}
+                      classNames="w-full"
+                      icon={<BsCircleHalf />}
+                    />
+                  </div>
+                  {layer.type === LayerType.Rectangle && (
+                    <div className="flex w-1/2 flex-col gap-1">
+                      <p className="text-[9px] font-medium text-gray-500">
+                        Corner Radius
+                      </p>
+                      <NumberInput
+                        value={layer.cornerRadius ?? 0}
+                        min={0}
+                        max={100}
+                        onChange={(number) => {
+                          updateLayer({ cornerRadius: number });
+                        }}
+                        classNames="w-full"
+                        icon={<RiRoundedCorner />}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="border-b border-gray-200"></div>
+              <div className="flex flex-col gap-2 p-4">
+                <span className="mb-2 text-[11px] font-medium">Fill</span>
+                <ColorPicker
+                  value={colorToCss(layer.fill)}
+                  onChange={(color) => {
+                    updateLayer({ fill: color, stroke: color });
+                  }}
+                />
+              </div>
+              <div className="border-b border-gray-200"></div>
+              <div className="flex flex-col gap-2 p-4">
+                <span className="mb-2 text-[11px] font-medium">Stroke</span>
+                <ColorPicker
+                  value={colorToCss(layer.stroke)}
+                  onChange={(color) => {
+                    updateLayer({ stroke: color });
+                  }}
+                />
+              </div>
+              {layer.type === LayerType.Text && (
+                <>
+                  <div className="border-b border-gray-200"></div>
+                  <div className="flex flex-col gap-2 p-4">
+                    <span className="mb-2 text-[11px] font-medium">
+                      Typography
+                    </span>
+                    <div className="flex flex-col gap-2">
+                      <Dropdown
+                        value={layer.fontFamily}
+                        onChange={(value) => {
+                          updateLayer({ fontFamily: value });
+                        }}
+                        options={["Inter", "Arial", "Times New Roman"]}
+                      />
+                      <div className="flex w-full gap-2">
+                        <div className="flex w-full flex-col gap-1">
+                          <p className="text-[9px] font-medium text-gray-500">
+                            Size
+                          </p>
+                          <NumberInput
+                            value={layer.fontSize}
+                            onChange={(number) => {
+                              updateLayer({ fontSize: number });
+                            }}
+                            classNames="w-full"
+                            icon={<p>W</p>}
+                          />
+                        </div>
+                        <div className="flex w-full flex-col gap-1">
+                          <p className="text-[9px] font-medium text-gray-500">
+                            Weight
+                          </p>
+                          <Dropdown
+                            value={layer.fontWeight.toString()}
+                            onChange={(value) => {
+                              updateLayer({ fontWeight: Number(value) });
+                            }}
+                            options={[
+                              "100",
+                              "200",
+                              "300",
+                              "400",
+                              "500",
+                              "600",
+                              "700",
+                              "800",
+                              "900",
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col gap-2 p-4">
+              <span className="mb-2 text-[11px] font-medium">Page</span>
+              <ColorPicker
+                value={roomColor ? colorToCss(roomColor) : "#1e1e1e"}
+                onChange={(color) => {
+                  const rgbColor = hexToRgb(color);
+                  setRoomColor(rgbColor);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="fixed right-3 top-3 flex h-[48px] w-[250px] items-center justify-between rounded-xl border bg-white pr-2">
+          <div className="max-36 flex w-full gap-2 overflow-x-scroll p-3 text-xs">
+            {me && (
+              <UserAvatar
+                color={connectionIdToColor(me.connectionId)}
+                name={me.info.name}
+              />
+            )}
+          </div>
+          <p>Share menu</p>
         </div>
       )}
     </>
