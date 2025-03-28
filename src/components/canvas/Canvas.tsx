@@ -43,6 +43,7 @@ import SelectionBox from "./SelectionBox";
 import useDeleteLayers from "~/hooks/useDeleteLayers";
 import SelectionTools from "./SelectionTools";
 import Sidebars from "../sidebars/Sidebars";
+import MultiplayerGuides from "./MultiplayerGuides";
 
 const MAX_LAYERS = 100;
 
@@ -311,6 +312,7 @@ export default function Canvas() {
       }
 
       setMyPresence({
+        cursor: point,
         pencilDraft: [...pencilDraft, [point.x, point.y, e.pressure]],
       });
     },
@@ -374,7 +376,7 @@ export default function Canvas() {
   );
 
   const onPointerMove = useMutation(
-    ({}, e: React.PointerEvent) => {
+    ({ setMyPresence }, e: React.PointerEvent) => {
       const point = pointerEventToCanvasPoint(e, camera);
 
       if (canvasState.mode === CanvasMode.Pressing) {
@@ -400,6 +402,7 @@ export default function Canvas() {
       } else if (canvasState.mode === CanvasMode.Resizing) {
         resizeSelectedLayer(point);
       }
+      setMyPresence({ cursor: point });
     },
     [
       camera,
@@ -413,6 +416,10 @@ export default function Canvas() {
       startMultipleSelection,
     ],
   );
+
+  const onPointerLeave = useMutation(({ setMyPresence }) => {
+    setMyPresence({ cursor: null });
+  }, []);
 
   const onPointerUp = useMutation(
     ({}, e: React.PointerEvent) => {
@@ -455,6 +462,7 @@ export default function Canvas() {
             onPointerUp={onPointerUp}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeave}
             className="h-full w-full"
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -487,6 +495,7 @@ export default function Canvas() {
                     )}
                   />
                 )}
+              <MultiplayerGuides />
               {pencilDraft !== null && pencilDraft.length > 0 && (
                 <Path
                   x={0}
