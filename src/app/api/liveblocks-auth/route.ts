@@ -11,6 +11,14 @@ export async function POST(req: Request) {
   // get the users room, and invite to rooms
   const user = await db.user.findUniqueOrThrow({
     where: { id: userSession?.user.id },
+    include: {
+      ownedRooms: true,
+      roomInvites: {
+        include: {
+          room: true,
+        },
+      },
+    },
   });
 
   const session = liveblocks.prepareSession(user.id, {
@@ -19,7 +27,13 @@ export async function POST(req: Request) {
     },
   });
 
-  session.allow(`room:${"test"}`, session.FULL_ACCESS);
+  user.ownedRooms.forEach((room) => {
+    session.allow(`room:${room.id}`, session.FULL_ACCESS);
+  });
+
+  user.roomInvites.forEach((invite) => {
+    session.allow(`room:${invite.room.id}`, session.FULL_ACCESS);
+  });
 
   const { status, body } = await session.authorize();
 
