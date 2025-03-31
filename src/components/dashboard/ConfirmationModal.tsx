@@ -16,7 +16,7 @@ const ConfirmationModal = ({
       <div className="w-full max-w-md rounded-md bg-white p-6 shadow-xl">
         <h2 className="text-xs font-semibold text-gray-900">Confirm</h2>
         <p className="mt-2 text-xs text-gray-900">{message}</p>
-        <div className="flex justify-center space-x-4 text-sm">
+        <div className="mt-4 flex justify-center space-x-4 text-sm">
           <button
             onClick={onClose}
             className="rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-gray-50"

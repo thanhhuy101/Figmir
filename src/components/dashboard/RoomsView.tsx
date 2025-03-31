@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import React, { useRef } from "react";
 import { useEffect, useMemo, useState } from "react";
 import ConfirmationModal from "./ConfirmationModal";
+import { deleteRoom, updateRoomTitle } from "~/app/actions/room";
 
 const PASTEL_COLORS = [
   "rgb(255, 182, 193)", // pink
@@ -99,6 +100,7 @@ export default function RoomsView({
                   // navigate to room page
                   router.push("/dashboard/" + room.id);
                 }}
+                canEdit={viewMode === "owns"}
               />
             </React.Fragment>
           );
@@ -116,6 +118,7 @@ function SingleRoom({
   selected,
   select,
   navigateTo,
+  canEdit,
 }: {
   id: string;
   title: string;
@@ -124,6 +127,7 @@ function SingleRoom({
   selected: boolean;
   select: () => void;
   navigateTo: () => void;
+  canEdit: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -135,17 +139,17 @@ function SingleRoom({
     if (event.key === "Enter") {
       event.preventDefault();
       setIsEditing(false);
-      //await updateRoomTitle(editedTitle, id);
+      await updateRoomTitle(editedTitle, id);
     }
   };
 
   const handleBlur = async () => {
     setIsEditing(false);
-    //await updateRoomTitle(editedTitle, id);
+    await updateRoomTitle(editedTitle, id);
   };
 
   const confirmDelete = async () => {
-    //await deleteRoom(id);
+    await deleteRoom(id);
     setShowConfirmationModal(false);
   };
 
@@ -174,7 +178,7 @@ function SingleRoom({
       >
         <p className="text-md select-none font-medium">{title}</p>
       </div>
-      {isEditing ? (
+      {isEditing && canEdit ? (
         <input
           type="text"
           value={editedTitle}

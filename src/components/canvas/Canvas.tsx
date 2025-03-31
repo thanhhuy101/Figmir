@@ -44,10 +44,19 @@ import useDeleteLayers from "~/hooks/useDeleteLayers";
 import SelectionTools from "./SelectionTools";
 import Sidebars from "../sidebars/Sidebars";
 import MultiplayerGuides from "./MultiplayerGuides";
+import { User } from "@prisma/client";
 
 const MAX_LAYERS = 100;
 
-export default function Canvas() {
+export default function Canvas({
+  roomName,
+  roomId,
+  othersWithAccessToRoom,
+}: {
+  roomName: string;
+  roomId: string;
+  othersWithAccessToRoom: User[];
+}) {
   const [leftIsMinimized, setLeftIsMinimized] = useState(false);
   const roomColor = useStorage((root) => root.roomColor);
   const layerIds = useStorage((root) => root.layerIds);
@@ -526,6 +535,9 @@ export default function Canvas() {
         canRedo={canRedo}
       />
       <Sidebars
+        roomName={roomName}
+        roomId={roomId}
+        othersWithAccessToRoom={othersWithAccessToRoom}
         leftIsMinimized={leftIsMinimized}
         setLeftIsMinimized={setLeftIsMinimized}
       />
